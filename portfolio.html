@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Suryansh Garg — Product Manager & Designer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@300;400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0c0b09;
+    --surface: #141210;
+    --border: #2a2520;
+    --gold: #c9a96e;
+    --gold-dim: #7a5f38;
+    --white: #f0ece4;
+    --muted: #6b6259;
+    --edit-glow: rgba(201,169,110,0.18);
+    --tag-bg: #1c1914;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* ── CURSOR ── */
+  #cursor-dot {
+    position: fixed; top: 0; left: 0; width: 8px; height: 8px;
+    background: var(--gold); border-radius: 50%; pointer-events: none;
+    transform: translate(-50%,-50%); z-index: 9999;
+    transition: transform 0.08s, opacity 0.2s;
+  }
+  #cursor-ring {
+    position: fixed; top: 0; left: 0; width: 36px; height: 36px;
+    border: 1px solid var(--gold-dim); border-radius: 50%; pointer-events: none;
+    transform: translate(-50%,-50%); z-index: 9998;
+    transition: transform 0.22s cubic-bezier(.18,.89,.32,1.28), width 0.2s, height 0.2s, opacity 0.2s;
+  }
+  body:hover #cursor-dot { opacity: 1; }
+
+  /* ── NOISE GRAIN ── */
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    opacity: 0.35; pointer-events: none; z-index: 0;
+  }
+
+  /* ── EDIT BAR ── */
+  #edit-bar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+    background: rgba(12,11,9,0.92); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 28px; font-family: 'DM Mono', monospace; font-size: 11px;
+    letter-spacing: 0.08em; color: var(--muted);
+    transform: translateY(-100%); transition: transform 0.3s ease;
+  }
+  #edit-bar.visible { transform: translateY(0); }
+  #edit-bar .status { display: flex; align-items: center; gap: 8px; }
+  #edit-bar .dot { width: 7px; height: 7px; background: #5eba6a; border-radius: 50%; animation: pulse 1.8s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  #edit-bar button {
+    background: transparent; border: 1px solid var(--border);
+    color: var(--muted); padding: 5px 14px; border-radius: 3px;
+    font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em;
+    cursor: none; transition: all 0.2s;
+  }
+  #edit-bar button:hover { border-color: var(--gold-dim); color: var(--gold); }
+
+  /* ── EDIT MODE STYLES ── */
+  body.edit-mode [contenteditable] {
+    outline: none;
+    border-bottom: 1px dashed var(--gold-dim);
+    background: var(--edit-glow);
+    border-radius: 3px;
+    padding: 0 3px;
+    min-width: 20px;
+    display: inline-block;
+    transition: background 0.2s;
+  }
+  body.edit-mode [contenteditable]:focus {
+    background: rgba(201,169,110,0.12);
+    border-bottom-color: var(--gold);
+  }
+  body.edit-mode .proto-link-input { display: block !important; }
+  body.edit-mode .proto-link-btn { display: none !important; }
+  .proto-link-input {
+    display: none;
+    background: rgba(201,169,110,0.07);
+    border: 1px dashed var(--gold-dim);
+    color: var(--gold);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    width: 100%;
+    margin-top: 10px;
+    outline: none;
+    cursor: text;
+  }
+  .proto-link-input:focus { border-color: var(--gold); }
+  .proto-link-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: transparent; border: 1px solid var(--border);
+    color: var(--muted); font-family: 'DM Mono', monospace;
+    font-size: 11px; letter-spacing: 0.08em; padding: 8px 14px;
+    border-radius: 4px; text-decoration: none; margin-top: 14px;
+    transition: all 0.25s; cursor: none;
+  }
+  .proto-link-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .proto-link-btn svg { width: 12px; height: 12px; }
+
+  /* ── LAYOUT ── */
+  main { position: relative; z-index: 1; }
+
+  /* ── HERO ── */
+  #hero {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 0;
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .hero-left {
+    padding: 80px 60px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    border-right: 1px solid var(--border);
+  }
+  .hero-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    letter-spacing: 0.12em; color: var(--muted); text-transform: uppercase;
+  }
+  .hero-nav a { color: var(--muted); text-decoration: none; transition: color 0.2s; cursor: none; }
+  .hero-nav a:hover { color: var(--gold); }
+
+  .hero-title {
+    flex: 1; display: flex; flex-direction: column; justify-content: center;
+  }
+  .hero-title .label {
+    font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.2em;
+    color: var(--gold); text-transform: uppercase; margin-bottom: 20px;
+    opacity: 0; animation: fadeUp 0.6s 0.2s ease forwards;
+  }
+  .hero-title h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(52px, 6vw, 84px);
+    font-weight: 400; line-height: 1.05;
+    letter-spacing: -0.02em;
+    opacity: 0; animation: fadeUp 0.7s 0.35s ease forwards;
+  }
+  .hero-title h1 em { font-style: italic; color: var(--gold); }
+  .hero-bio {
+    font-size: 14px; line-height: 1.75; color: var(--muted);
+    max-width: 340px; margin-top: 28px;
+    opacity: 0; animation: fadeUp 0.7s 0.5s ease forwards;
+  }
+
+  .hero-footer {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    opacity: 0; animation: fadeUp 0.7s 0.65s ease forwards;
+  }
+  .hero-footer .scroll-hint {
+    font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.15em;
+    color: var(--muted); text-transform: uppercase;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .scroll-arrow {
+    width: 20px; height: 20px; border: 1px solid var(--border); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    animation: bounce 2s infinite;
+  }
+  @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(4px)} }
+
+  .hero-right {
+    position: relative; overflow: hidden;
+    background: var(--surface);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .hero-orb {
+    width: 420px; height: 420px; border-radius: 50%;
+    background: radial-gradient(circle at 40% 40%, rgba(201,169,110,0.15) 0%, transparent 65%);
+    border: 1px solid rgba(201,169,110,0.08);
+    position: absolute;
+    animation: orbFloat 8s ease-in-out infinite;
+  }
+  .hero-orb:nth-child(2) { width: 280px; height: 280px; animation-delay: -3s; border-color: rgba(201,169,110,0.05); }
+  @keyframes orbFloat { 0%,100%{transform:translate(0,0)} 33%{transform:translate(20px,-15px)} 66%{transform:translate(-10px,20px)} }
+  .hero-stat-grid {
+    position: relative; z-index: 2;
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 1px; background: var(--border);
+    border: 1px solid var(--border);
+  }
+  .hero-stat {
+    background: var(--bg);
+    padding: 32px 28px;
+    opacity: 0; animation: fadeIn 0.5s ease forwards;
+  }
+  .hero-stat:nth-child(1){animation-delay:0.6s}
+  .hero-stat:nth-child(2){animation-delay:0.75s}
+  .hero-stat:nth-child(3){animation-delay:0.9s}
+  .hero-stat:nth-child(4){animation-delay:1.05s}
+  .hero-stat .num {
+    font-family: 'Playfair Display', serif; font-size: 40px; font-weight: 700;
+    color: var(--gold); display: block; line-height: 1;
+  }
+  .hero-stat .desc {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: 0.12em; color: var(--muted); text-transform: uppercase;
+    margin-top: 6px; display: block;
+  }
+
+  @keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+  /* ── SECTION HEADER ── */
+  .section-header {
+    display: flex; align-items: center; gap: 20px;
+    padding: 48px 60px 0;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 24px;
+  }
+  .section-num {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: 0.15em; color: var(--gold-dim); text-transform: uppercase;
+  }
+  .section-title {
+    font-family: 'Playfair Display', serif; font-size: 13px; font-weight: 400;
+    letter-spacing: 0.05em; color: var(--muted);
+    text-transform: uppercase; font-style: italic;
+  }
+  .section-line { flex: 1; height: 1px; background: var(--border); }
+
+  /* ── PROJECTS GRID ── */
+  #projects { padding-bottom: 80px; }
+  .projects-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .project-card {
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 44px 52px;
+    position: relative; overflow: hidden;
+    transition: background 0.3s;
+  }
+  .project-card:nth-child(even) { border-right: none; }
+  .project-card:hover { background: var(--surface); }
+  .project-card::before {
+    content: ''; position: absolute; top: 0; left: 0;
+    width: 2px; height: 0; background: var(--gold);
+    transition: height 0.4s ease;
+  }
+  .project-card:hover::before { height: 100%; }
+
+  .project-num {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: 0.18em; color: var(--gold-dim); margin-bottom: 20px;
+    display: block;
+  }
+  .project-title {
+    font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 400;
+    line-height: 1.2; margin-bottom: 14px; letter-spacing: -0.01em;
+  }
+  .project-desc {
+    font-size: 13px; line-height: 1.8; color: var(--muted); margin-bottom: 20px;
+  }
+  .project-tags {
+    display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px;
+  }
+  .tag {
+    background: var(--tag-bg); border: 1px solid var(--border);
+    color: var(--muted); font-family: 'DM Mono', monospace;
+    font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
+    padding: 4px 10px; border-radius: 2px;
+  }
+  .project-year {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: 0.12em; color: var(--gold-dim);
+    position: absolute; top: 44px; right: 52px;
+  }
+
+  /* ── ADD PROJECT CARD ── */
+  .add-card {
+    border: none;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 12px;
+    cursor: none; transition: background 0.3s;
+    display: none;
+  }
+  body.edit-mode .add-card { display: flex; }
+  .add-card:hover { background: var(--surface); }
+  .add-card .plus {
+    width: 44px; height: 44px; border: 1px dashed var(--gold-dim);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 22px; color: var(--gold-dim); transition: all 0.2s;
+  }
+  .add-card:hover .plus { border-color: var(--gold); color: var(--gold); }
+  .add-card span {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: 0.12em; color: var(--muted); text-transform: uppercase;
+  }
+
+  /* ── ABOUT ── */
+  #about {
+    display: grid; grid-template-columns: 1fr 1fr;
+    border-bottom: 1px solid var(--border);
+  }
+  .about-text {
+    padding: 64px 60px;
+    border-right: 1px solid var(--border);
+  }
+  .about-text h2 {
+    font-family: 'Playfair Display', serif; font-size: 44px;
+    font-weight: 400; line-height: 1.1; margin-bottom: 28px;
+    letter-spacing: -0.02em;
+  }
+  .about-text h2 em { font-style: italic; color: var(--gold); }
+  .about-text p { font-size: 14px; line-height: 1.9; color: var(--muted); margin-bottom: 16px; }
+  .about-skills { padding: 64px 60px; }
+  .skill-section { margin-bottom: 36px; }
+  .skill-label {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: 0.15em; color: var(--gold); text-transform: uppercase;
+    margin-bottom: 12px; display: block;
+  }
+  .skill-list {
+    display: flex; flex-wrap: wrap; gap: 8px;
+  }
+  .skill-pill {
+    border: 1px solid var(--border); color: var(--white);
+    font-size: 12px; padding: 6px 14px; border-radius: 100px;
+    transition: all 0.2s;
+  }
+  .skill-pill:hover { border-color: var(--gold-dim); color: var(--gold); }
+
+  /* ── CONTACT ── */
+  #contact {
+    padding: 80px 60px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 40px;
+  }
+  .contact-left h2 {
+    font-family: 'Playfair Display', serif; font-size: 52px;
+    font-weight: 400; line-height: 1.05; letter-spacing: -0.02em;
+  }
+  .contact-left h2 em { font-style: italic; color: var(--gold); }
+  .contact-right { display: flex; flex-direction: column; gap: 12px; min-width: 260px; }
+  .contact-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 16px 20px; border: 1px solid var(--border);
+    border-radius: 6px; text-decoration: none; color: var(--white);
+    font-size: 13px; transition: all 0.25s; cursor: none;
+  }
+  .contact-item:hover { border-color: var(--gold-dim); background: var(--surface); }
+  .contact-item .icon {
+    width: 32px; height: 32px; border: 1px solid var(--border);
+    border-radius: 6px; display: flex; align-items: center; justify-content: center;
+    font-size: 14px; flex-shrink: 0; transition: border-color 0.2s;
+  }
+  .contact-item:hover .icon { border-color: var(--gold-dim); }
+  .contact-item .ci-label { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted); letter-spacing: 0.1em; }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 24px 60px;
+    display: flex; align-items: center; justify-content: space-between;
+    font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: var(--muted);
+  }
+
+  /* ── EDIT TOGGLE BUTTON ── */
+  #edit-toggle {
+    position: fixed; bottom: 32px; right: 32px; z-index: 1001;
+    background: var(--bg); border: 1px solid var(--border);
+    color: var(--muted); font-family: 'DM Mono', monospace;
+    font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+    padding: 12px 20px; border-radius: 4px; cursor: none;
+    display: flex; align-items: center; gap: 8px;
+    transition: all 0.25s; box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+  }
+  #edit-toggle:hover, body.edit-mode #edit-toggle {
+    border-color: var(--gold); color: var(--gold);
+    background: rgba(201,169,110,0.06);
+  }
+  #edit-toggle svg { width: 13px; height: 13px; }
+
+  /* ── SAVE FLASH ── */
+  #save-flash {
+    position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: var(--surface); border: 1px solid var(--gold-dim);
+    color: var(--gold); font-family: 'DM Mono', monospace; font-size: 11px;
+    letter-spacing: 0.1em; padding: 10px 24px; border-radius: 4px;
+    pointer-events: none; opacity: 0; transition: all 0.3s ease; z-index: 2000;
+  }
+  #save-flash.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    #hero { grid-template-columns: 1fr; }
+    .hero-left { padding: 80px 28px 40px; border-right: none; }
+    .hero-right { min-height: 280px; border-top: 1px solid var(--border); }
+    .hero-stat-grid { grid-template-columns: 1fr 1fr; }
+    .projects-grid { grid-template-columns: 1fr; }
+    .project-card { border-right: none; }
+    #about { grid-template-columns: 1fr; }
+    .about-text { border-right: none; border-bottom: 1px solid var(--border); padding: 48px 28px; }
+    .about-skills { padding: 48px 28px; }
+    .section-header { padding: 40px 28px 20px; }
+    #contact { flex-direction: column; padding: 60px 28px; }
+    footer { padding: 20px 28px; }
+    #edit-toggle { bottom: 20px; right: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Custom Cursor -->
+<div id="cursor-dot"></div>
+<div id="cursor-ring"></div>
+
+<!-- Edit Mode Bar -->
+<div id="edit-bar">
+  <div class="status">
+    <span class="dot"></span>
+    <span>EDIT MODE ACTIVE — Click any text to edit. Links update live.</span>
+  </div>
+  <div style="display:flex;gap:10px">
+    <button onclick="saveAll()">SAVE CHANGES</button>
+    <button onclick="resetAll()">RESET</button>
+  </div>
+</div>
+
+<!-- Edit Toggle -->
+<button id="edit-toggle" onclick="toggleEdit()">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+  </svg>
+  <span id="toggle-label">Edit Portfolio</span>
+</button>
+
+<!-- Save Flash -->
+<div id="save-flash">✓ Changes Saved</div>
+
+<main>
+
+  <!-- HERO -->
+  <section id="hero">
+    <div class="hero-left">
+      <nav class="hero-nav">
+        <span contenteditable="false" id="nav-name">Suryansh Garg</span>
+        <div style="display:flex;gap:28px">
+          <a href="#projects">Work</a>
+          <a href="#about">About</a>
+          <a href="#contact">Contact</a>
+        </div>
+      </nav>
+
+      <div class="hero-title">
+        <span class="label">Product Manager · Designer · Analyst</span>
+        <h1>
+          <span contenteditable="false" id="hero-line1">Building</span><br>
+          <em contenteditable="false" id="hero-line2">products</em><br>
+          <span contenteditable="false" id="hero-line3">people love.</span>
+        </h1>
+        <p class="hero-bio" contenteditable="false" id="hero-bio">
+          PM & product designer at BITS Pilani Goa. I turn messy user problems into clean, validated product decisions — from research and prototypes to roadmaps and go-to-market.
+        </p>
+      </div>
+
+      <div class="hero-footer">
+        <div class="scroll-hint">
+          <div class="scroll-arrow">
+            <svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="var(--gold-dim)" stroke-width="1.5">
+              <path d="M4 1v6M1 5l3 3 3-3"/>
+            </svg>
+          </div>
+          Scroll to explore
+        </div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:0.1em" contenteditable="false" id="hero-available">
+          Open to PM / Design roles · 2026
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-right">
+      <div class="hero-orb"></div>
+      <div class="hero-orb"></div>
+      <div class="hero-stat-grid">
+        <div class="hero-stat">
+          <span class="num" contenteditable="false" id="stat1-num">2</span>
+          <span class="desc" contenteditable="false" id="stat1-label">Internships</span>
+        </div>
+        <div class="hero-stat">
+          <span class="num" contenteditable="false" id="stat2-num">5+</span>
+          <span class="desc" contenteditable="false" id="stat2-label">Products Built</span>
+        </div>
+        <div class="hero-stat">
+          <span class="num" contenteditable="false" id="stat3-num">100K+</span>
+          <span class="desc" contenteditable="false" id="stat3-label">Records Analyzed</span>
+        </div>
+        <div class="hero-stat">
+          <span class="num" contenteditable="false" id="stat4-num">BITS</span>
+          <span class="desc" contenteditable="false" id="stat4-label">Pilani, Goa</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROJECTS -->
+  <section id="projects">
+    <div class="section-header">
+      <span class="section-num">01</span>
+      <span class="section-title">Selected Work</span>
+      <div class="section-line"></div>
+    </div>
+
+    <div class="projects-grid" id="projects-grid">
+
+      <!-- Card 1 -->
+      <div class="project-card">
+        <span class="project-num">001</span>
+        <span class="project-year" contenteditable="false" id="p1-year">2026</span>
+        <h3 class="project-title" contenteditable="false" id="p1-title">Hevy Community Platform</h3>
+        <p class="project-desc" contenteditable="false" id="p1-desc">
+          Designed a community layer for the Hevy fitness app to boost retention by 40% and 2–3× session time. Built a 10+ screen Figma prototype covering communities, messaging, leaderboards, and crowd intelligence features.
+        </p>
+        <div class="project-tags">
+          <span class="tag">Product Management</span>
+          <span class="tag">Figma</span>
+          <span class="tag">Growth Loops</span>
+        </div>
+        <a class="proto-link-btn" id="p1-link-btn" href="#" target="_blank">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          View Prototype
+        </a>
+        <input class="proto-link-input" id="p1-link" placeholder="Paste Figma prototype URL here…" />
+      </div>
+
+      <!-- Card 2 -->
+      <div class="project-card">
+        <span class="project-num">002</span>
+        <span class="project-year" contenteditable="false" id="p2-year">2026</span>
+        <h3 class="project-title" contenteditable="false" id="p2-title">CityEase — Relocation App</h3>
+        <p class="project-desc" contenteditable="false" id="p2-desc">
+          End-to-end product design for a relocation app targeting fresh graduates. 4-screen Figma prototype with neighbourhood scoring, AI match briefs, and a conversational onboarding flow. North star: neighbourhood decision within 5 minutes.
+        </p>
+        <div class="project-tags">
+          <span class="tag">UX Research</span>
+          <span class="tag">AI Product</span>
+          <span class="tag">RICE Framework</span>
+        </div>
+        <a class="proto-link-btn" id="p2-link-btn" href="#" target="_blank">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          View Prototype
+        </a>
+        <input class="proto-link-input" id="p2-link" placeholder="Paste Figma prototype URL here…" />
+      </div>
+
+      <!-- Card 3 -->
+      <div class="project-card">
+        <span class="project-num">003</span>
+        <span class="project-year" contenteditable="false" id="p3-year">2025</span>
+        <h3 class="project-title" contenteditable="false" id="p3-title">AI Emotion Detection — APPCAIR</h3>
+        <p class="project-desc" contenteditable="false" id="p3-desc">
+          Defined product requirements for a wearable emotion-detection system combining GSR/HR signals with personality context. Validated "Personality-as-a-Feature" hypothesis across 31 users, lifting valence prediction by 7pp and cutting hardware costs by 80%.
+        </p>
+        <div class="project-tags">
+          <span class="tag">AI / ML</span>
+          <span class="tag">User Research</span>
+          <span class="tag">Product Strategy</span>
+        </div>
+        <a class="proto-link-btn" id="p3-link-btn" href="#" target="_blank">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          Case Study
+        </a>
+        <input class="proto-link-input" id="p3-link" placeholder="Paste case study URL here…" />
+      </div>
+
+      <!-- Card 4 -->
+      <div class="project-card">
+        <span class="project-num">004</span>
+        <span class="project-year" contenteditable="false" id="p4-year">2025</span>
+        <h3 class="project-title" contenteditable="false" id="p4-title">Amazon Brazil — SQL Analysis</h3>
+        <p class="project-desc" contenteditable="false" id="p4-desc">
+          Analyzed 100K+ e-commerce records using advanced SQL — CTEs, window functions, joins — to uncover that credit cards drove 74% of transactions. Delivered customer segmentation and pricing insights that improved revenue optimization by 15%.
+        </p>
+        <div class="project-tags">
+          <span class="tag">SQL</span>
+          <span class="tag">Data Analysis</span>
+          <span class="tag">E-commerce</span>
+        </div>
+        <a class="proto-link-btn" id="p4-link-btn" href="#" target="_blank">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          View Project
+        </a>
+        <input class="proto-link-input" id="p4-link" placeholder="Paste project URL here…" />
+      </div>
+
+      <!-- Add Card -->
+      <div class="project-card add-card" onclick="addProject()">
+        <div class="plus">+</div>
+        <span>Add New Project</span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section id="about">
+    <div class="section-header" style="grid-column:1/-1">
+      <span class="section-num">02</span>
+      <span class="section-title">About Me</span>
+      <div class="section-line"></div>
+    </div>
+    <div class="about-text">
+      <h2>Research first,<br><em>design</em><br>second.</h2>
+      <p contenteditable="false" id="about-p1">
+        I'm a Product Manager and designer studying Mechanical Engineering at BITS Pilani, Goa. I work at the intersection of user research, data, and product thinking — turning ambiguous problems into clear, testable solutions.
+      </p>
+      <p contenteditable="false" id="about-p2">
+        At APPCAIR, I led AI product research across 31 users and defined the spec for a wearable emotion-detection system. At PIEDS, I built dashboards and evaluated 30+ startup pitches. My process is research-first — I don't open Figma until I understand the problem deeply.
+      </p>
+      <p contenteditable="false" id="about-p3">
+        I'm passionate about AI-native products, behavioral psychology, and building things that change habits. Currently open to PM and product design internships / full-time roles graduating July 2026.
+      </p>
+    </div>
+    <div class="about-skills">
+      <div class="skill-section">
+        <span class="skill-label">Product & Design</span>
+        <div class="skill-list">
+          <span class="skill-pill">Figma</span>
+          <span class="skill-pill">Prototyping</span>
+          <span class="skill-pill">Wireframing</span>
+          <span class="skill-pill">Go-to-Market</span>
+          <span class="skill-pill">Roadmapping</span>
+          <span class="skill-pill">A/B Testing</span>
+        </div>
+      </div>
+      <div class="skill-section">
+        <span class="skill-label">Data & Analytics</span>
+        <div class="skill-list">
+          <span class="skill-pill">SQL</span>
+          <span class="skill-pill">Python</span>
+          <span class="skill-pill">Pandas</span>
+          <span class="skill-pill">Power BI</span>
+          <span class="skill-pill">Excel</span>
+          <span class="skill-pill">KPI Analysis</span>
+        </div>
+      </div>
+      <div class="skill-section">
+        <span class="skill-label">Frameworks</span>
+        <div class="skill-list">
+          <span class="skill-pill">RICE</span>
+          <span class="skill-pill">User Personas</span>
+          <span class="skill-pill">Funnel Analysis</span>
+          <span class="skill-pill">Jobs-to-be-Done</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section id="contact">
+    <div class="contact-left">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.18em;color:var(--gold);text-transform:uppercase;margin-bottom:16px">03 / Let's Talk</div>
+      <h2>Let's build<br>something <em>great</em><br>together.</h2>
+    </div>
+    <div class="contact-right">
+      <a class="contact-item" id="email-link" href="mailto:suryanshgarg0109@gmail.com">
+        <div class="icon">✉</div>
+        <div>
+          <div class="ci-label">Email</div>
+          <span contenteditable="false" id="contact-email">suryanshgarg0109@gmail.com</span>
+        </div>
+      </a>
+      <a class="contact-item" id="linkedin-link" href="#" target="_blank">
+        <div class="icon">in</div>
+        <div>
+          <div class="ci-label">LinkedIn</div>
+          <span contenteditable="false" id="contact-linkedin">linkedin.com/in/suryanshgarg</span>
+        </div>
+      </a>
+      <a class="contact-item" id="dribbble-link" href="#" target="_blank">
+        <div class="icon">⬡</div>
+        <div>
+          <div class="ci-label">Figma / Portfolio</div>
+          <span contenteditable="false" id="contact-dribbble">Add your Figma / Behance link</span>
+        </div>
+      </a>
+      <div style="display:none">
+        <input id="linkedin-url" class="proto-link-input" placeholder="LinkedIn URL…"/>
+        <input id="dribbble-url" class="proto-link-input" placeholder="Dribbble / Behance URL…"/>
+      </div>
+      <div id="contact-url-inputs" style="display:none;flex-direction:column;gap:8px;margin-top:8px">
+        <input id="linkedin-url-edit" class="proto-link-input" style="display:block!important" placeholder="LinkedIn URL…"/>
+        <input id="dribbble-url-edit" class="proto-link-input" style="display:block!important" placeholder="Dribbble / Behance URL…"/>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <span contenteditable="false" id="footer-name">© 2026 Suryansh Garg. All rights reserved.</span>
+  <span style="color:var(--gold-dim)">Product Designer</span>
+</footer>
+
+<script>
+  // ── Cursor ──
+  const dot = document.getElementById('cursor-dot');
+  const ring = document.getElementById('cursor-ring');
+  let mx = 0, my = 0, rx = 0, ry = 0;
+  document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; dot.style.left=mx+'px'; dot.style.top=my+'px'; });
+  (function animRing(){
+    rx += (mx - rx) * 0.15; ry += (my - ry) * 0.15;
+    ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
+    requestAnimationFrame(animRing);
+  })();
+
+  // ── Edit Mode ──
+  let editMode = false;
+
+  function toggleEdit() {
+    editMode = !editMode;
+    document.body.classList.toggle('edit-mode', editMode);
+    document.getElementById('edit-bar').classList.toggle('visible', editMode);
+    document.getElementById('toggle-label').textContent = editMode ? 'Done Editing' : 'Edit Portfolio';
+    document.getElementById('contact-url-inputs').style.display = editMode ? 'flex' : 'none';
+
+    document.querySelectorAll('[contenteditable]').forEach(el => {
+      el.contentEditable = editMode ? 'true' : 'false';
+      if (editMode) el.addEventListener('input', debounceSave);
+    });
+    document.querySelectorAll('.proto-link-input').forEach(inp => {
+      inp.addEventListener('input', debounceSave);
+    });
+    if (editMode) loadFromStorage();
+  }
+
+  // ── Prototype link sync ──
+  function syncLinks() {
+    [1,2,3,4].forEach(i => {
+      const inp = document.getElementById('p'+i+'-link');
+      const btn = document.getElementById('p'+i+'-link-btn');
+      if (inp && btn) {
+        const v = inp.value.trim();
+        if (v) { btn.href = v; btn.style.opacity='1'; }
+        else { btn.href='#'; btn.style.opacity='0.4'; }
+      }
+    });
+    // LinkedIn / Dribbble
+    const li = document.getElementById('linkedin-url-edit');
+    const dr = document.getElementById('dribbble-url-edit');
+    if (li && li.value) { document.getElementById('linkedin-link').href = li.value; document.getElementById('contact-linkedin').textContent = li.value.replace('https://',''); }
+    if (dr && dr.value) { document.getElementById('dribbble-link').href = dr.value; document.getElementById('contact-dribbble').textContent = dr.value.replace('https://',''); }
+    // Email
+    const email = document.getElementById('contact-email');
+    if (email) document.getElementById('email-link').href = 'mailto:' + email.textContent.trim();
+  }
+
+  // ── Save / Load ──
+  const SAVE_KEYS = [
+    'nav-name','hero-line1','hero-line2','hero-line3','hero-bio','hero-available',
+    'stat1-num','stat1-label','stat2-num','stat2-label','stat3-num','stat3-label','stat4-num','stat4-label',
+    'p1-title','p1-desc','p1-year','p2-title','p2-desc','p2-year',
+    'p3-title','p3-desc','p3-year','p4-title','p4-desc','p4-year',
+    'about-p1','about-p2','about-p3',
+    'contact-email','contact-linkedin','contact-dribbble','footer-name'
+  ];
+  const LINK_KEYS = ['p1-link','p2-link','p3-link','p4-link','linkedin-url-edit','dribbble-url-edit'];
+
+  function saveAll() {
+    SAVE_KEYS.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) localStorage.setItem('pf_'+id, el.textContent.trim());
+    });
+    LINK_KEYS.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) localStorage.setItem('pf_'+id, el.value.trim());
+    });
+    syncLinks();
+    const flash = document.getElementById('save-flash');
+    flash.classList.add('show');
+    setTimeout(() => flash.classList.remove('show'), 2200);
+  }
+
+  function loadFromStorage() {
+    SAVE_KEYS.forEach(id => {
+      const val = localStorage.getItem('pf_'+id);
+      if (val) { const el = document.getElementById(id); if (el) el.textContent = val; }
+    });
+    LINK_KEYS.forEach(id => {
+      const val = localStorage.getItem('pf_'+id);
+      if (val) { const el = document.getElementById(id); if (el) el.value = val; }
+    });
+    syncLinks();
+  }
+
+  let saveTimer;
+  function debounceSave() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => { saveAll(); }, 1200);
+  }
+
+  function resetAll() {
+    if (!confirm('Reset all changes? This cannot be undone.')) return;
+    [...SAVE_KEYS, ...LINK_KEYS].forEach(id => localStorage.removeItem('pf_'+id));
+    location.reload();
+  }
+
+  function addProject() {
+    const grid = document.getElementById('projects-grid');
+    const num = grid.querySelectorAll('.project-card:not(.add-card)').length + 1;
+    const card = document.createElement('div');
+    card.className = 'project-card';
+    card.innerHTML = `
+      <span class="project-num">00${num}</span>
+      <span class="project-year" contenteditable="true">2024</span>
+      <h3 class="project-title" contenteditable="true">New Project</h3>
+      <p class="project-desc" contenteditable="true">Describe your project here — what problem it solved, your role, and the impact it had.</p>
+      <div class="project-tags"><span class="tag">Tag</span></div>
+      <a class="proto-link-btn" href="#" target="_blank">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        View Prototype
+      </a>
+      <input class="proto-link-input" placeholder="Paste prototype URL here…" style="display:block"/>
+    `;
+    grid.insertBefore(card, grid.querySelector('.add-card'));
+  }
+
+  // Load saved data on page load
+  window.addEventListener('DOMContentLoaded', () => {
+    loadFromStorage();
+  });
+</script>
+</body>
+</html>
